@@ -52,7 +52,10 @@ kdtree = KDTree(vertex_coords_array)
 
 # add houses
 for building in data["buildings"].values():
-    building_points = map(
-        lambda point: np.array([point["lat"], point["lon"]]), building["geometry"]
+    building_points = list(
+        map(lambda point: np.array([point["lat"], point["lon"]]), building["geometry"])
     )
     kd_results = [kdtree.query(point) for point in building_points]
+    nearest_building_point_ix = np.argmin(map(lambda x: x[0], kd_results))
+    nearest_building_point = building_points[nearest_building_point_ix]
+    print(nearest_building_point)
