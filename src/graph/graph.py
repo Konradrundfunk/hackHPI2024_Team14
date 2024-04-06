@@ -10,13 +10,16 @@ from used_files import total_file, possible_system_file
 import energy_graph as eg
 
 
+# city data = total_file
 with open(total_file, "r") as file:
     data = json.load(file)
+# possible_system_file = system.json
 with open(possible_system_file, "r") as file:
     possible_systems = json.load(file)
 
 highways = data["highways"]
 buildings = data["buildings"]
+
 
 edges = []
 """keys are vertex_ids"""
@@ -86,14 +89,19 @@ graph = eg.EnergySystemGraph()
 for vertex_id, vertex in vertices.vertices.items():
     if vertex.is_building:
         type = buildings[vertex.building_id]["type"]
-        winter_demands = buildings[vertex.building_id]["winter"]["Heating"]
-        summer_demands = buildings[vertex.building_id]["summer"]["Heating"]
+        if (
+            not "Heating" in buildings[vertex.building_id]["winter"]
+            or not "Heating" in buildings[vertex.building_id]["summer"]
+        ):
+            demands = np.zeros(48)
+        else:
+            winter_demands = buildings[vertex.building_id]["winter"]["Heating"]
+            summer_demands = buildings[vertex.building_id]["summer"]["Heating"]
         demands = np.array([winter_demands, summer_demands])
         consumer = eg.Consumer(demands)
         graph.add_node(consumer)
         producers = []
         node = eg.House(vertex, consumer, producers)
-        graph.add_node(node)
         for system_name, system in possible_systems.items():
             if type in system["canBeUsedBy"]:
                 if system_name == "Heatpump AirWater (medium)":
@@ -105,7 +113,9 @@ for vertex_id, vertex in vertices.vertices.items():
                     graph.Streets.append(supplyStreet)
                     graph.add_node(producer)
                 if system_name == "DistrictHeatingCreator":
-                    producer = eg.Producer("DistrictHeatingCreator")
+                    producer = eg.Producer(
+                        "DistrictHeatingCreator", supplyed_house=node
+                    )
                     supplyStreet = eg.Street([], type="DistrictHeatingCreator")
                     producer.add_out_street(supplyStreet)
                     node.add_in_street(supplyStreet)
@@ -126,15 +136,17 @@ for vertex_id, vertex in vertices.vertices.items():
                     node.add_out_street(supplyStreet)
     else:
         node = eg.Traffic(vertices.get_vertex(vertex_id))
-        graph.add_node(node)
+    graph.add_node(node)
 for edge in edges:
     start_node = edge.vertex1.vertex_id
     end_node = edge.vertex2.vertex_id
-    street_forward = eg.Street([edge])
-    street_backward = eg.Street([edge])
+    street_forward = eg.Street([edge], type="road")
+    street_backward = eg.Street([edge], type="road")
     graph.Streets.append(street_forward)
     graph.Streets.append(street_backward)
     graph.Nodes[start_node].add_out_street(street_forward)
     graph.Nodes[end_node].add_in_street(street_forward)
     graph.Nodes[start_node].add_in_street(street_backward)
     graph.Nodes[end_node].add_out_street(street_backward)
+
+print("jooo")

@@ -1,7 +1,12 @@
 import pulp
-from energy_graph import Street, Node, Building
+from energy_graph import Street, Node, Consumer, FlowNode, Producer
 from graph import *
 from graph import graph
+from used_files import total_file
+from potentials import heating_potentials
+
+with open(total_file, "r") as file:
+    data = json.load(file)
 
 problem = pulp.LpProblem("Minimize_BS_Cost", pulp.LpMinimize)
 
@@ -14,58 +19,49 @@ for street in graph.Streets:
         lowBound=0,
         cat=pulp.LpContinuous,
     )
-    for i in range(24):
-        street.summer_flows[i] = pulp.LpVariable(
+    for i in range(48):
+        street.flows[i] = pulp.LpVariable(
             f"summer_flow_{street.edges[0].vertex1.vertex_id}_{street.edges[0].vertex2.vertex_id}_{i}",
             lowBound=0,
             cat=pulp.LpContinuous,
         )
-        street.winter_flows[i] = pulp.LpVariable(
-            f"winter_flow_{street.edges[0].vertex1.vertex_id}_{street.edges[0].vertex2.vertex_id}_{i}",
-            lowBound=0,
-            cat=pulp.LpContinuous,
-        )
 
+# # ---------------- Define constraints ----------------#
+
+# Balancing constraints
 for node in graph.Nodes.values():
-    # if isinstance(node, Building):
-    #     node.generators = pulp.LpVariable(
-    #         f"Generators_{node.vertex_id}",
-    #         lowBound=0,
-    #         cat=pulp.LpInteger,
-    #     )
-    #     if node.json_obj["type"] not in ["industrial", "free_field"]:
-    #         for i in range(24):
-    #             node.heat_pump_draws_summer[i] = pulp.LpVariable(
-    #                 f"heat_pump_draws_summer_{node.vertex_id}_{i}",
-    #                 lowBound=0,
-    #                 cat=pulp.LpContinuous,
-    #             )
-    #             node.heat_pump_draws_winter[i] = pulp.LpVariable(
-    #                 f"heat_pump_draws_winter_{node.vertex_id}_{i}",
-    #                 lowBound=0,
-    #                 cat=pulp.LpContinuous,
-    #             )
-    if "DistrictHeatingCreator" in node.possible_systems:
-        node.district_heating_creators = pulp.LpVariable(
-            f"DistrictHeatingCreator_{node.vertex_id}",
-            lowBound=0,
-            cat=pulp.LpInteger,
-        )
+    if isinstance(node, FlowNode):
+        for i in range(48):
+            left_side = 0
+            for in_street in node.in_streets:
+                left_side = in_street.flows[i] + left_side
+            right_side = 0
+            for out_street in node.out_streets:
+                right_side = out_street.flows[i] + right_side
+            problem += left_side == right_side
+    elif isinstance(node, Consumer):
+        for i in range(48):
+            incoming = 0
+            for in_street in node.in_streets:
+                incoming = incoming + in_street.flows[i]
+            problem += incoming == node.demands[i]
+    elif isinstance(node, Producer):
+        if node.type == "DistrictHeatingCreator":
+            area = data["buildings"][node.supplied_house.vertex.building_id][
+                "base_area"
+            ]
+            total_heat_potentials = heating_potentials * area
+            for i in range(48):
+                for out_street in node.out_streets:
+                    problem += out_street.flows[i] <= total_heat_potentials[i]
 
 
-# ---------------- Define constraints ----------------#
-for street in graph.streets:
-    for i in range(24):
-        problem += street.summer_flows[i] <= street.capacity
-        problem += street.winter_flows[i] <= street.capacity
-for node in graph.Nodes:
-    if isinstance(node, Building) and node.json_obj["type"] == "industrial":
-        output_of_one_heat_generator = 1000
+# Capacity constraints
+for street in graph.Streets:
+    for i in range(48):
+        problem += street.flows[i] <= street.capacity
 
 # ---------------- Define objective ----------------#
 
 
-# ---------------- Solve the problem ----------------#
-
-
-# ---------------- Visualize the results as SVGs ----------------#
+# # ---------------- Visualize the results as SVGs ----------------#

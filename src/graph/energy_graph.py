@@ -47,24 +47,30 @@ class Consumer(Node):
     #             self.possible_systems.append(system)
 
 
+class FlowNode(Node):
+    def __init__(self):
+        super().__init__()
+
+
 class Producer(Node):
-    def __init__(self, type: str):
+    def __init__(self, type: str, supplyed_house=None):
         super().__init__()
         self.type = type
+        self.supplied_house = supplyed_house
 
 
-class Traffic(Node):
-    def __init__(self, vertex):
-        super().__init__()
-        self.vertex = vertex
-
-
-class House(Node):
+class House(FlowNode):
     def __init__(self, vertex, consumer: Consumer, producers: list[Producer]):
         super().__init__()
         self.vertex: Vertex = vertex
         self.consumer = consumer
         self.producers = producers
+
+
+class Traffic(FlowNode):
+    def __init__(self, vertex):
+        super().__init__()
+        self.vertex = vertex
 
 
 class EnergySystemGraph:
@@ -73,7 +79,7 @@ class EnergySystemGraph:
         self.Streets = []
 
     def add_node(self, node: Node):
-        if type(node) == Traffic:
+        if isinstance(node, FlowNode):
             self.Nodes[node.vertex.vertex_id] = node
         else:
             index = str(np.random.random())
