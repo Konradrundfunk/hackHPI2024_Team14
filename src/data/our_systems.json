@@ -84,5 +84,13 @@
             "transport",
             "farm"
         ]
+    },
+    "DistrictHeatingLine (medium)": {
+        "name": "DistrictHeatingLine (medium)",
+        "lossPerM": 0.00095,
+        "investPerM": 0.6,
+        "operatingCost": 0.01,
+        "co2": 0,
+        "energy": "DistrictHeating (Transport)"
     }
 }

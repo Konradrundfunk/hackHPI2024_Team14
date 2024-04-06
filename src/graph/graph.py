@@ -97,13 +97,23 @@ for vertex_id, vertex in vertices.vertices.items():
         else:
             winter_demands = buildings[vertex.building_id]["winter"]["Heating"]
             summer_demands = buildings[vertex.building_id]["summer"]["Heating"]
+            demands = np.array([winter_demands, summer_demands])
+        if (
+            not "Elektro" in buildings[vertex.building_id]["winter"]
+            or not "Elektro" in buildings[vertex.building_id]["summer"]
+        ):
+            energy_demands = np.zeros(48)
+        else:
+            enery_winter_demands = buildings[vertex.building_id]["winter"]["Elektro"]
+            enery_summer_demands = buildings[vertex.building_id]["summer"]["Elektro"]
+            energy_demands = np.array([enery_winter_demands, enery_summer_demands])
         demands = np.array([winter_demands, summer_demands])
-        consumer = eg.Consumer(demands)
+        consumer = eg.Consumer(demands, energy_demands)
         graph.add_node(consumer)
         producers = []
         node = eg.House(vertex, consumer, producers)
         for system_name, system in possible_systems.items():
-            if type in system["canBeUsedBy"]:
+            if "canBeUsedBy" in system and type in system["canBeUsedBy"]:
                 if system_name == "Heatpump AirWater (medium)":
                     producer = eg.Producer("Heatpump AirWater (medium)")
                     supplyStreet = eg.Street([], type="Heatpump AirWater (medium)")
@@ -140,8 +150,8 @@ for vertex_id, vertex in vertices.vertices.items():
 for edge in edges:
     start_node = edge.vertex1.vertex_id
     end_node = edge.vertex2.vertex_id
-    street_forward = eg.Street([edge], type="road")
-    street_backward = eg.Street([edge], type="road")
+    street_forward = eg.Street([edge], type="DistrictHeatingLine (medium)")
+    street_backward = eg.Street([edge], type="DistrictHeatingLine (medium)")
     graph.Streets.append(street_forward)
     graph.Streets.append(street_backward)
     graph.Nodes[start_node].add_out_street(street_forward)

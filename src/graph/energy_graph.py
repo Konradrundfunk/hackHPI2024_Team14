@@ -36,9 +36,11 @@ class Consumer(Node):
     def __init__(
         self,
         demands,
+        energy_demands,
     ):
         super().__init__()
         self.demands = demands
+        self.energy_demands = energy_demands
 
     # def evaluate_possible_systems(self):
     #     type = self.json_obj["type"]
