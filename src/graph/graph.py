@@ -4,16 +4,13 @@ from scipy.spatial import KDTree
 import matplotlib.pyplot as plt
 import networkx as nx
 from root_graph import Vertices, Edge
+from used_files import total_file
 
 
 import energy_graph as eg
 
-file_name = "./data/total_Arnis.json"
-# file_name = (
-#     "D:/_Folders/projects_small/competition/hackHPI2024_Team14/src/data/total_test.json"
-# )
 
-with open(file_name, "r") as file:
+with open(total_file, "r") as file:
     data = json.load(file)
 
 highways = data["highways"]
@@ -85,8 +82,10 @@ graph = eg.EnergySystemGraph()
 
 for vertex_id, vertex in vertices.vertices.items():
     if vertex.is_building:
-        node = eg.Building(vertex_id, data["buildings"][vertex.building_id])
+        node = eg.House(vertex_id)
         graph.add_node(node)
+        type = data[vertex.building_id]["type"]
+        if type == ""
     else:
         node = eg.Traffic(vertex_id)
         graph.add_node(node)

@@ -1,0 +1,88 @@
+{
+    "Heatpump AirWater (medium)": {
+        "name": "Heatpump AirWater (medium)",
+        "min": 100,
+        "invest": 700,
+        "area": 0,
+        "operatingCost": 0.0065,
+        "co2": 0,
+        "input": {
+            "energy": "Electro"
+        },
+        "output": {
+            "energy": "Heating",
+            "factor": 3.0
+        },
+        "canBeUsedBy": [
+            "residential",
+            "industrial",
+            "commercial",
+            "high_density_residential",
+            "construction",
+            "retail",
+            "transport",
+            "farm"
+        ]
+    },
+    "DistrictHeatingCreator": {
+        "name": "DistrictHeatingCreator",
+        "invest": 200,
+        "area": 0,
+        "operatingCost": 0,
+        "co2": 0,
+        "input": {
+            "energy": "districtHeatingPotential"
+        },
+        "output": {
+            "energy": "DistrictHeating (Transport)",
+            "factor": 1
+        },
+        "canBeUsedBy": ["industrial"]
+    },
+    "HeatingElement": {
+        "name": "HeatingElement",
+        "invest": 150,
+        "area": 0,
+        "operatingCost": 0.00025,
+        "co2": 0,
+        "input": {
+            "energy": "Electro"
+        },
+        "output": {
+            "energy": "Heating",
+            "factor": 1
+        },
+        "canBeUsedBy": [
+            "residential",
+            "commercial",
+            "high_density_residential",
+            "construction",
+            "retail",
+            "transport",
+            "farm"
+        ]
+    },
+    "DistrictHeatingConnection": {
+        "name": "DistrictHeatingConnection",
+        "invest": 15,
+        "area": 0.01,
+        "operatingCost": 1.25e-5,
+        "co2": 0,
+        "input": {
+            "energy": "DistrictHeating (Transport)"
+        },
+        "output": {
+            "energy": "Heating",
+            "factor": 1
+        },
+        "canBeUsedBy": [
+            "residential",
+            "commercial",
+            "high_density_residential",
+            "construction",
+            "retail",
+            "transport",
+            "farm"
+        ]
+    }
+}

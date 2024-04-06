@@ -4,28 +4,27 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from root_graph import Vertex, Edge
 import geopy
+import json
+from used_files import possible_system_file
 
 
 class Street:
-    def __init__(self, edges: list[Edge]):
+    def __init__(self, edges: list[Edge], type: str):
         self.edges = edges
         self.length = sum(
             geopy.distance.geodesic(edge.vertex1.coords, edge.vertex2.coords).meters
             for edge in edges
         )
         self.capacity = None
-        self.summer_flows = [None] * 24
-        self.winter_flows = [None] * 24
+        """summer, winter"""
+        self.flows = [None] * 48
+        self.type = type
 
 
 class Node:
-    def __init__(self, vertex_id):
-        self.vertex_id = vertex_id
+    def __init__(self):
         self.in_streets: list[Street] = []
         self.out_streets: list[Street] = []
-        self.generators = None
-        self.heat_pump_draws_summer = [None] * 24
-        self.heat_pump_draws_winter = [None] * 24
 
     def add_in_street(self, street: Street):
         self.in_streets.append(street)
@@ -34,30 +33,39 @@ class Node:
         self.out_streets.append(street)
 
 
-# class Demands:
-#    def __init__(self, w_electro, w_heating, s_electro, s_heating):
-#        self.w_electro = w_electro
-#        self.w_heating = w_heating
-#        self.s_electro = s_electro
-#        self.s_heating = s_heating
-
-
-class Building(Node):
+class Consumer(Node):
     def __init__(
         self,
-        vertex_id,
-        json_obj,
+        demands,
     ):
-        super().__init__(vertex_id)
-        self.json_obj = json_obj
+        super().__init__()
+        self.demands = demands
+
+    # def evaluate_possible_systems(self):
+    #     type = self.json_obj["type"]
+    #     for system in possible_systems:
+    #         if system["canBeUsedBy"].contains(type):
+    #             self.possible_systems.append(system)
+
+
+class Producer(Node):
+    def __init__(self, type: str):
+        super().__init__()
+        self.type = type
 
 
 class Traffic(Node):
-    def __init__(
-        self,
-        vertex_id,
-    ):
-        super().__init__(vertex_id)
+    def __init__(self, vertex):
+        super().__init__()
+        self.vertex = vertex
+
+
+class House(Node):
+    def __init__(self, vertex, consumer: Consumer, producers: list[Producer]):
+        super().__init__()
+        self.vertex = vertex
+        self.consumer = consumer
+        self.producers = producers
 
 
 class EnergySystemGraph:

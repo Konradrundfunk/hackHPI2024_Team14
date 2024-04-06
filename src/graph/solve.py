@@ -26,26 +26,31 @@ for street in graph.Streets:
             cat=pulp.LpContinuous,
         )
 
-# photovoltaic, district heat generators and heat pumps (abstracted as generators)
-for node in graph.Nodes:
-    if isinstance(node, Building):
-        node.generators = pulp.LpVariable(
-            f"Generators_{node.vertex_id}",
+for node in graph.Nodes.values():
+    # if isinstance(node, Building):
+    #     node.generators = pulp.LpVariable(
+    #         f"Generators_{node.vertex_id}",
+    #         lowBound=0,
+    #         cat=pulp.LpInteger,
+    #     )
+    #     if node.json_obj["type"] not in ["industrial", "free_field"]:
+    #         for i in range(24):
+    #             node.heat_pump_draws_summer[i] = pulp.LpVariable(
+    #                 f"heat_pump_draws_summer_{node.vertex_id}_{i}",
+    #                 lowBound=0,
+    #                 cat=pulp.LpContinuous,
+    #             )
+    #             node.heat_pump_draws_winter[i] = pulp.LpVariable(
+    #                 f"heat_pump_draws_winter_{node.vertex_id}_{i}",
+    #                 lowBound=0,
+    #                 cat=pulp.LpContinuous,
+    #             )
+    if "DistrictHeatingCreator" in node.possible_systems:
+        node.district_heating_creators = pulp.LpVariable(
+            f"DistrictHeatingCreator_{node.vertex_id}",
             lowBound=0,
             cat=pulp.LpInteger,
         )
-        if node.json_obj["type"] not in ["industrial", "free_field"]:
-            for i in range(24):
-                node.heat_pump_draws_summer[i] = pulp.LpVariable(
-                    f"heat_pump_draws_summer_{node.vertex_id}_{i}",
-                    lowBound=0,
-                    cat=pulp.LpContinuous,
-                )
-                node.heat_pump_draws_winter[i] = pulp.LpVariable(
-                    f"heat_pump_draws_winter_{node.vertex_id}_{i}",
-                    lowBound=0,
-                    cat=pulp.LpContinuous,
-                )
 
 
 # ---------------- Define constraints ----------------#
