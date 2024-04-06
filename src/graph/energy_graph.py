@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from root_graph import Vertex, Edge
 import geopy
 import json
-from used_files import possible_system_file
 
 
 class Street:
@@ -63,7 +62,7 @@ class Traffic(Node):
 class House(Node):
     def __init__(self, vertex, consumer: Consumer, producers: list[Producer]):
         super().__init__()
-        self.vertex = vertex
+        self.vertex: Vertex = vertex
         self.consumer = consumer
         self.producers = producers
 
@@ -74,4 +73,8 @@ class EnergySystemGraph:
         self.Streets = []
 
     def add_node(self, node: Node):
-        self.Nodes[node.vertex_id] = node
+        if type(node) == Traffic:
+            self.Nodes[node.vertex.vertex_id] = node
+        else:
+            index = str(np.random.random())
+            self.Nodes[index] = node

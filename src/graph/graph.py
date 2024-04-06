@@ -4,7 +4,7 @@ from scipy.spatial import KDTree
 import matplotlib.pyplot as plt
 import networkx as nx
 from root_graph import Vertices, Edge
-from used_files import total_file
+from used_files import total_file, possible_system_file
 
 
 import energy_graph as eg
@@ -12,8 +12,11 @@ import energy_graph as eg
 
 with open(total_file, "r") as file:
     data = json.load(file)
+with open(possible_system_file, "r") as file:
+    possible_systems = json.load(file)
 
 highways = data["highways"]
+buildings = data["buildings"]
 
 edges = []
 """keys are vertex_ids"""
@@ -54,7 +57,7 @@ kdtree = KDTree(vertex_coords_array)
 
 
 # add buildings
-for building_id, building in data["buildings"].items():
+for building_id, building in buildings.items():
     building_points = list(
         map(lambda point: np.array([point["lat"], point["lon"]]), building["geometry"])
     )[1:]
@@ -82,12 +85,47 @@ graph = eg.EnergySystemGraph()
 
 for vertex_id, vertex in vertices.vertices.items():
     if vertex.is_building:
-        node = eg.House(vertex_id)
+        type = buildings[vertex.building_id]["type"]
+        winter_demands = buildings[vertex.building_id]["winter"]["Heating"]
+        summer_demands = buildings[vertex.building_id]["summer"]["Heating"]
+        demands = np.array([winter_demands, summer_demands])
+        consumer = eg.Consumer(demands)
+        graph.add_node(consumer)
+        producers = []
+        node = eg.House(vertex, consumer, producers)
         graph.add_node(node)
-        type = data[vertex.building_id]["type"]
-        if type == ""
+        for system_name, system in possible_systems.items():
+            if type in system["canBeUsedBy"]:
+                if system_name == "Heatpump AirWater (medium)":
+                    producer = eg.Producer("Heatpump AirWater (medium)")
+                    supplyStreet = eg.Street([], type="Heatpump AirWater (medium)")
+                    producer.add_out_street(supplyStreet)
+                    consumer.add_in_street(supplyStreet)
+                    producers.append(producer)
+                    graph.Streets.append(supplyStreet)
+                    graph.add_node(producer)
+                if system_name == "DistrictHeatingCreator":
+                    producer = eg.Producer("DistrictHeatingCreator")
+                    supplyStreet = eg.Street([], type="DistrictHeatingCreator")
+                    producer.add_out_street(supplyStreet)
+                    node.add_in_street(supplyStreet)
+                    producers.append(producer)
+                    graph.Streets.append(supplyStreet)
+                    graph.add_node(producer)
+                if system_name == "HeatingElement":
+                    producer = eg.Producer("HeatingElement")
+                    supplyStreet = eg.Street([], type="HeatingElement")
+                    producer.add_out_street(supplyStreet)
+                    consumer.add_in_street(supplyStreet)
+                    producers.append(producer)
+                    graph.Streets.append(supplyStreet)
+                    graph.add_node(producer)
+                if system_name == "DistrictHeatingConnection":
+                    supplyStreet = eg.Street([], type="DistrictHeatingConnection")
+                    consumer.add_in_street(supplyStreet)
+                    node.add_out_street(supplyStreet)
     else:
-        node = eg.Traffic(vertex_id)
+        node = eg.Traffic(vertices.get_vertex(vertex_id))
         graph.add_node(node)
 for edge in edges:
     start_node = edge.vertex1.vertex_id
